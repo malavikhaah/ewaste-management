@@ -401,6 +401,7 @@ export default function Requests({ mode = "all" }) {
   };
 
   const handleNextStep = () => {
+    setError("");
     const errorMsg = validateStepData(currentStep);
     if (errorMsg) {
       setStepError(errorMsg);
@@ -411,15 +412,23 @@ export default function Requests({ mode = "all" }) {
   };
 
   const handlePreviousStep = () => {
+    setError("");
     setStepError("");
     setCurrentStep(prev => prev - 1);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setError("");
     if (!imageFile) { setStepError("Proof image is required."); return; }
     setLoading(true);
     const token = localStorage.getItem("token");
+    if (!token) {
+      setLoading(false);
+      setError("Please login again.");
+      navigate("/login");
+      return;
+    }
     const payload = new FormData();
     const finalDeviceType = form.deviceType === "Other" ? form.customDeviceType.trim() : form.deviceType.trim();
     payload.append("deviceType", finalDeviceType);
@@ -433,7 +442,7 @@ export default function Requests({ mode = "all" }) {
 
     try {
       await apiRequest("/requests", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: payload });
-      setShowSuccess(true);
+      navigate("/requests/view");
     } catch (err) { setError(err.message); } finally { setLoading(false); }
   };
 
@@ -499,6 +508,7 @@ export default function Requests({ mode = "all" }) {
              
              <div style={{ minHeight: '350px' }}>
                 {stepError && <div className="form-error" style={{ marginBottom: '32px', padding: '16px', borderRadius: '14px' }}>{stepError}</div>}
+                {error && <div className="form-error" style={{ marginBottom: '32px', padding: '16px', borderRadius: '14px' }}>{error}</div>}
                 
                 {currentStep === 1 && (
                   <div className="form-grid" style={{ display: 'grid', gap: '28px' }}>
